@@ -1,0 +1,160 @@
+{
+    "app": {
+        "log_level": "info",
+        "log_path": "",
+        "daemon": false,
+        "verbose": false,
+        "once": false
+    },
+
+    "cloudflare": {
+        "api_token": "YOUR_CLOUDFLARE_API_TOKEN_HERE",
+        "use_shared_token": true
+    },
+
+    "wan": {
+        "default_interface": "eth0",
+        "failover_enabled": true,
+        "failover_threshold": 3,
+        "check_interval": 30,
+        "interfaces": [
+            {
+                "name": "eth0",
+                "alias": "主 WAN (电信)",
+                "type": "dhcp",
+                "enabled": true,
+                "detect_ipv4": true,
+                "detect_ipv6": true,
+                "use_external_detect": true,
+                "use_local_read": true,
+                "ipv4_endpoint": "",
+                "ipv6_endpoint": "",
+                "priority": 1,
+                "failover_enabled": true,
+                "check_interval": 30
+            },
+            {
+                "name": "eth1",
+                "alias": "备用 WAN (联通)",
+                "type": "dhcp",
+                "enabled": true,
+                "detect_ipv4": true,
+                "detect_ipv6": false,
+                "use_external_detect": true,
+                "use_local_read": false,
+                "ipv4_endpoint": "https://api.ipify.org",
+                "ipv6_endpoint": "",
+                "priority": 2,
+                "failover_enabled": true,
+                "check_interval": 60
+            },
+            {
+                "name": "eth2",
+                "alias": "第三 WAN",
+                "type": "static",
+                "enabled": false,
+                "detect_ipv4": true,
+                "detect_ipv6": false,
+                "use_external_detect": false,
+                "use_local_read": true,
+                "priority": 3,
+                "failover_enabled": false,
+                "check_interval": 120
+            }
+        ]
+    },
+
+    "records": [
+        {
+            "id": "www_ipv4",
+            "name": "www.example.com IPv4",
+            "zone_name": "example.com",
+            "record_name": "www.example.com",
+            "record_type": "A",
+            "binding_mode": "fixed",
+            "wan_interface": "主 WAN (电信)",
+            "forced_ip": "",
+            "ttl": 300,
+            "proxied": false,
+            "check_interval": 60,
+            "update_on_change": true,
+            "create_if_missing": true,
+            "delete_on_exit": false
+        },
+        {
+            "id": "www_ipv6",
+            "name": "www.example.com IPv6",
+            "zone_name": "example.com",
+            "record_name": "www.example.com",
+            "record_type": "AAAA",
+            "binding_mode": "fixed",
+            "wan_interface": "eth0",
+            "forced_ip": "",
+            "ttl": 300,
+            "proxied": false,
+            "check_interval": 60,
+            "update_on_change": true,
+            "create_if_missing": true
+        },
+        {
+            "id": "backup_ipv4",
+            "name": "backup.example.com IPv4",
+            "zone_name": "example.com",
+            "record_name": "backup.example.com",
+            "record_type": "A",
+            "binding_mode": "fixed",
+            "wan_interface": "eth1",
+            "forced_ip": "",
+            "ttl": 600,
+            "proxied": false,
+            "check_interval": 120
+        },
+        {
+            "id": "api_ipv4",
+            "name": "api.example.com IPv4",
+            "zone_name": "example.com",
+            "record_name": "api.example.com",
+            "record_type": "A",
+            "binding_mode": "dynamic",
+            "wan_interface": "",
+            "wan_priority": 1,
+            "forced_ip": "",
+            "ttl": 60,
+            "proxied": true,
+            "check_interval": 30
+        },
+        {
+            "id": "internal_ipv4",
+            "name": "internal.example.com IPv4",
+            "api_token": "ANOTHER_API_TOKEN",
+            "zone_name": "internal.example.com",
+            "record_name": "internal.example.com",
+            "record_type": "A",
+            "binding_mode": "auto",
+            "wan_interface": "",
+            "forced_ip": "192.168.1.100",
+            "ttl": 60,
+            "proxied": false
+        }
+    ],
+
+    "global_settings": {
+        "default_check_interval": 300,
+        "max_concurrent_updates": 5,
+        "parallel_updates": true
+    },
+
+    "ip_detection": {
+        "timeout_ms": 5000,
+        "retry_count": 3,
+        "retry_delay_ms": 1000,
+        "preferred_type": "ipv4"
+    },
+
+    "logging": {
+        "level": "info",
+        "format": "timestamp",
+        "flush_on_write": false,
+        "quiet": false
+    }
+}

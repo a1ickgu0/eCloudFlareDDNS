@@ -1,0 +1,27 @@
+# Build outputs
+build/
+*.o
+*.obj
+*.a
+*.so
+*.dylib
+*.dll
+
+# macOS debug bundles
+*.dSYM/
+
+# Local assistant/editor metadata
+.claude/
+
+# Test outputs
+tests/test_report
+tests/test_runner
+tests/*.log
+tests/*.tmp
+
+# Tool-generated index files
+cscope.out
+cscope.out.in
+cscope.out.po
+cscope.*
+cscpoe*

@@ -1,0 +1,34 @@
+{
+    "app": {
+        "log_level": "info",
+        "log_path": "",
+        "daemon": false,
+        "verbose": false,
+        "once": false
+    },
+    "cloudflare": {
+        "api_token": "YOUR_CLOUDFLARE_API_TOKEN_HERE",
+        "zone_id": "",
+        "zone_name": "example.com",
+        "record_name": "ddns.example.com",
+        "record_type": "A",
+        "ttl": 1,
+        "proxied": false,
+        "check_interval": 300,
+        "update_on_change": true,
+        "create_if_missing": true,
+        "delete_on_exit": false
+    },
+    "ip_detection": {
+        "timeout_ms": 5000,
+        "retry_count": 3,
+        "retry_delay_ms": 1000,
+        "preferred_type": "ipv4"
+    },
+    "logging": {
+        "level": "info",
+        "format": "timestamp",
+        "flush_on_write": false,
+        "quiet": false
+    }
+}

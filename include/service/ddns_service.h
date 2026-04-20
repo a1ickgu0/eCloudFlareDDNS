@@ -565,6 +565,7 @@ CFDDNS_API ddns_status_t ddns_service_get_status(ddns_service_t *service);
 CFDDNS_API int ddns_service_get_stats(ddns_service_t *service, ddns_stats_t *stats);
 CFDDNS_API int ddns_service_get_current_ip(ddns_service_t *service, char *buf, size_t len);
 CFDDNS_API int ddns_service_get_record_info(ddns_service_t *service, dns_record_t *record);
+CFDDNS_API int ddns_service_query_record_server(ddns_service_t *service, dns_record_t *record);
 
 /* ========== Dependencies ========== */
 

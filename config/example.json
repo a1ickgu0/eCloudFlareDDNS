@@ -23,7 +23,9 @@
         "timeout_ms": 5000,
         "retry_count": 3,
         "retry_delay_ms": 1000,
-        "preferred_type": "ipv4"
+        "preferred_type": "ipv4",
+        "ipv4_endpoint": "https://api.ipify.org?format=text",
+        "ipv6_endpoint": "https://api6.ipify.org?format=text"
     },
     "logging": {
         "level": "info",

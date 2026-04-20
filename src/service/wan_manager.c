@@ -160,8 +160,15 @@ static int wan_manager_detect_ip_external_impl(wan_manager_t *self,
         return CFDDNS_ERR_INVALID_ARG;
     }
 
-    /* Use IP provider with interface binding */
+    const char *configured_endpoint = (type == IP_TYPE_IPV6) ? wan->ipv6_endpoint : wan->ipv4_endpoint;
+
+    /* Use WAN-specific configured endpoint when provided. */
     if (h->ip_provider != NULL) {
+        if (configured_endpoint != NULL && configured_endpoint[0] != '\0') {
+            return ip_provider_get_ip_from_endpoint(h->ip_provider, type,
+                                                    configured_endpoint, wan->name, buf, len);
+        }
+
         return ip_provider_get_ip_from_interface(h->ip_provider, type, wan->name, buf, len);
     }
 
@@ -774,8 +781,8 @@ void wan_manager_show_config(wan_manager_t *manager, const char *wan_name) {
         printf("    IPv6:             %s\n", wan->current_ipv6[0] ? wan->current_ipv6 : "Not detected");
         printf("\n");
         printf("  Endpoints:\n");
-        printf("    IPv4 Endpoint:    %s\n", wan->ipv4_endpoint[0] ? wan->ipv4_endpoint : "Default");
-        printf("    IPv6 Endpoint:    %s\n", wan->ipv6_endpoint[0] ? wan->ipv6_endpoint : "Default");
+        printf("    IPv4 Endpoint:    %s\n", wan->ipv4_endpoint[0] ? wan->ipv4_endpoint : "Not configured");
+        printf("    IPv6 Endpoint:    %s\n", wan->ipv6_endpoint[0] ? wan->ipv6_endpoint : "Not configured");
         printf("\n");
         printf("  Health:\n");
         printf("    Check Interval:   %d seconds\n", wan->check_interval);

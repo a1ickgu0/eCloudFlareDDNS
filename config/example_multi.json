@@ -27,8 +27,8 @@
                 "detect_ipv6": true,
                 "use_external_detect": true,
                 "use_local_read": true,
-                "ipv4_endpoint": "",
-                "ipv6_endpoint": "",
+                "ipv4_endpoint": "https://api.ipify.org?format=text",
+                "ipv6_endpoint": "https://api6.ipify.org?format=text",
                 "priority": 1,
                 "failover_enabled": true,
                 "check_interval": 30
@@ -148,7 +148,9 @@
         "timeout_ms": 5000,
         "retry_count": 3,
         "retry_delay_ms": 1000,
-        "preferred_type": "ipv4"
+        "preferred_type": "ipv4",
+        "ipv4_endpoint": "https://api.ipify.org?format=text",
+        "ipv6_endpoint": "https://api6.ipify.org?format=text"
     },
 
     "logging": {

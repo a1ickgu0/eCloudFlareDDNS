@@ -284,6 +284,22 @@ CFDDNS_API int ip_provider_get_ip_from_interface(ip_provider_t *provider,
                                                   char *buf, size_t len);
 
 /**
+ * @brief Get public IP from an explicit endpoint URL (with optional interface binding)
+ * @param provider IP provider
+ * @param type IP type to get
+ * @param endpoint_url Endpoint URL from configuration
+ * @param interface_name Network interface name (NULL for no binding)
+ * @param buf Buffer to store IP address
+ * @param len Buffer length
+ * @return 0 on success, error code on failure
+ */
+CFDDNS_API int ip_provider_get_ip_from_endpoint(ip_provider_t *provider,
+                                                 ip_type_t type,
+                                                 const char *endpoint_url,
+                                                 const char *interface_name,
+                                                 char *buf, size_t len);
+
+/**
  * @brief Set bind interface for IP detection
  * @param provider IP provider
  * @param interface_name Interface name (NULL to unbind)

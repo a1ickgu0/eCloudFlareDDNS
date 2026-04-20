@@ -101,6 +101,26 @@ Show current state without entering normal loop:
 ./build/bin/cfddns -c config/example_multi.json -r www_ipv4
 ```
 
+Run one-shot direct update (without config file):
+
+```bash
+./build/bin/cfddns \
+  --once \
+  --api-token "YOUR_CLOUDFLARE_API_TOKEN_HERE" \
+  --zone-name "YOUR_ZONE_NAME" \
+  --record-name "YOUR_RECORD_FQDN" \
+  --record-type "A" \
+  --ttl 300 \
+  --proxied false \
+  --ip "203.0.113.10"
+```
+
+Result behavior for `--once` direct update:
+
+- On failure: prints `DDNS once update: FAILED (...)`
+- On success: prints `DDNS once update: SUCCESS`
+- After success: queries Cloudflare API and prints server-side record value
+
 Supported show types for `-s`:
 
 - `all`
@@ -130,9 +150,9 @@ Multi-record key sections:
 - `wan.interfaces[]` for WAN definitions
 - `records[]` for DNS record rules
 - Record binding fields:
-	- `binding_mode`: `fixed` / `dynamic` / `auto`
-	- `wan_interface` or `wan_priority`
-	- optional `forced_ip`
+  - `binding_mode`: `fixed` / `dynamic` / `auto`
+  - `wan_interface` or `wan_priority`
+  - optional `forced_ip`
 
 ### Token And Git Safety
 
@@ -247,6 +267,26 @@ make uninstall PREFIX=/usr/local
 ./build/bin/cfddns -c config/example_multi.json -r www_ipv4
 ```
 
+一次性直更（不依赖配置文件）：
+
+```bash
+./build/bin/cfddns \
+  --once \
+  --api-token "YOUR_CLOUDFLARE_API_TOKEN_HERE" \
+  --zone-name "YOUR_ZONE_NAME" \
+  --record-name "YOUR_RECORD_FQDN" \
+  --record-type "A" \
+  --ttl 300 \
+  --proxied false \
+  --ip "203.0.113.10"
+```
+
+`--once` 直更模式结果说明：
+
+- 失败时输出：`DDNS once update: FAILED (...)`
+- 成功时输出：`DDNS once update: SUCCESS`
+- 成功后会再通过 Cloudflare API 回查并打印服务器端记录值
+
 `-s` 支持的类型：
 
 - `all`
@@ -276,9 +316,9 @@ make uninstall PREFIX=/usr/local
 - `wan.interfaces[]`：WAN 接口定义
 - `records[]`：每条 DNS 记录规则
 - 记录绑定字段：
-	- `binding_mode`: `fixed` / `dynamic` / `auto`
-	- `wan_interface` 或 `wan_priority`
-	- 可选 `forced_ip`
+  - `binding_mode`: `fixed` / `dynamic` / `auto`
+  - `wan_interface` 或 `wan_priority`
+  - 可选 `forced_ip`
 
 ### Token 与 Git 安全
 

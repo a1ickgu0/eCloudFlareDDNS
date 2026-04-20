@@ -1048,6 +1048,36 @@ int ddns_service_get_record_info(ddns_service_t *service, dns_record_t *record) 
     return (strlen(record->id) > 0) ? CFDDNS_OK : CFDDNS_ERR_NOT_FOUND;
 }
 
+int ddns_service_query_record_server(ddns_service_t *service, dns_record_t *record) {
+    if (service == NULL || record == NULL) return CFDDNS_ERR_NULL_POINTER;
+
+    ddns_service_handle_t *h = (ddns_service_handle_t *)service->handle;
+    if (h == NULL) return CFDDNS_ERR_NULL_POINTER;
+
+    /* This helper currently targets single-record mode. */
+    if (h->use_multi_record) return CFDDNS_ERR_INVALID_ARG;
+
+    char zone_id[64] = {0};
+    if (strlen(h->config.zone_id) > 0) {
+        CFDDNS_STRNCPY(zone_id, h->config.zone_id, sizeof(zone_id));
+    } else {
+        int zone_result = cf_find_zone(h, h->config.zone_name, zone_id, sizeof(zone_id));
+        if (CFDDNS_FAILED(zone_result)) return zone_result;
+    }
+
+    dns_record_t server_record;
+    memset(&server_record, 0, sizeof(server_record));
+
+    int result = cf_find_record(h, zone_id, h->config.record_name, h->config.record_type, &server_record);
+    if (CFDDNS_FAILED(result)) return result;
+
+    h->current_record = server_record;
+    CFDDNS_STRNCPY(h->stats.dns_ip, server_record.content, sizeof(h->stats.dns_ip));
+    *record = server_record;
+
+    return CFDDNS_OK;
+}
+
 void ddns_service_set_http_client(ddns_service_t *service, http_client_t *client) {
     if (service == NULL) return;
 

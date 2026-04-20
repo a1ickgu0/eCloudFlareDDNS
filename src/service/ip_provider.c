@@ -19,32 +19,12 @@
 
 /* ========== Default IP Detection Endpoints ========== */
 
+/*
+ * External endpoints must come from configuration. Keep an empty sentinel array
+ * for API compatibility with ip_provider_default_endpoints().
+ */
 static ip_provider_endpoint_t default_endpoints[] = {
-    {
-        .name = "cloudflare",
-        .url_ipv4 = "https://1.1.1.1/cdn-cgi/trace",
-        .url_ipv6 = "https://[2606:4700:4700::1111]/cdn-cgi/trace",
-        .priority = 1,
-    },
-    {
-        .name = "ipify",
-        .url_ipv4 = "https://api.ipify.org?format=text",
-        .url_ipv6 = "https://api6.ipify.org?format=text",
-        .priority = 2,
-    },
-    {
-        .name = "icanhazip",
-        .url_ipv4 = "https://icanhazip.com",
-        .url_ipv6 = "https://ipv6.icanhazip.com",
-        .priority = 3,
-    },
-    {
-        .name = "ident.me",
-        .url_ipv4 = "https://ident.me",
-        .url_ipv6 = "https://ident.me",
-        .priority = 4,
-    },
-    { NULL, NULL, NULL, 0 }  /* Sentinel */
+    { NULL, NULL, NULL, 0 }
 };
 
 /* ========== IP Provider Handle ========== */
@@ -55,7 +35,7 @@ typedef struct {
     ip_provider_config_t config;
     char *bind_interface_owned;
     http_client_t *http_client;
-    ip_provider_endpoint_t endpoints[MAX_CUSTOM_ENDPOINTS + 4];  /* Default + custom */
+    ip_provider_endpoint_t endpoints[MAX_CUSTOM_ENDPOINTS];
     int endpoint_count;
 } ip_provider_handle_t;
 
@@ -224,7 +204,7 @@ static int fetch_ip_from_endpoint(ip_provider_handle_t *h,
     if (h->http_client == NULL) return CFDDNS_ERR_NULL_POINTER;
 
     const char *url = (type == IP_TYPE_IPV6) ? endpoint->url_ipv6 : endpoint->url_ipv4;
-    if (url == NULL) return CFDDNS_ERR_INVALID_ARG;
+    if (url == NULL || url[0] == '\0') return CFDDNS_ERR_INVALID_ARG;
 
     http_response_t response;
     memset(&response, 0, sizeof(response));
@@ -288,13 +268,7 @@ static int ip_provider_init_impl(ip_provider_t *self, const ip_provider_config_t
     }
     if (CFDDNS_FAILED(result)) return result;
 
-    /* Initialize endpoints with defaults */
-    h->endpoint_count = 0;
-    for (int i = 0; default_endpoints[i].name != NULL; i++) {
-        h->endpoints[h->endpoint_count++] = default_endpoints[i];
-    }
-
-    sort_endpoints_by_priority(h);
+    /* Keep endpoints configured externally (via config or add_endpoint). */
 
     return CFDDNS_OK;
 }
@@ -401,12 +375,6 @@ ip_provider_t *ip_provider_create_with_http(http_client_t *http_client) {
     handle->config = ip_provider_config_default();
     handle->http_client = http_client;
 
-    /* Initialize endpoints with defaults */
-    for (int i = 0; default_endpoints[i].name != NULL; i++) {
-        handle->endpoints[handle->endpoint_count++] = default_endpoints[i];
-    }
-    sort_endpoints_by_priority(handle);
-
     provider->handle = handle;
     provider->http_client = http_client;
 
@@ -467,9 +435,12 @@ void ip_provider_set_http_client(ip_provider_t *provider, http_client_t *client)
 }
 
 int ip_provider_add_endpoint(ip_provider_t *provider, const ip_provider_endpoint_t *endpoint) {
+    if (provider == NULL) return CFDDNS_ERR_NULL_POINTER;
     ip_provider_handle_t *h = (ip_provider_handle_t *)provider->handle;
     if (h == NULL || endpoint == NULL) return CFDDNS_ERR_NULL_POINTER;
-    if (h->endpoint_count >= MAX_CUSTOM_ENDPOINTS + 4) return CFDDNS_ERR_OUT_OF_MEMORY;
+    if (endpoint->name == NULL || endpoint->name[0] == '\0') return CFDDNS_ERR_INVALID_ARG;
+    if (endpoint->url_ipv4 == NULL && endpoint->url_ipv6 == NULL) return CFDDNS_ERR_INVALID_ARG;
+    if (h->endpoint_count >= MAX_CUSTOM_ENDPOINTS) return CFDDNS_ERR_OUT_OF_MEMORY;
 
     h->endpoints[h->endpoint_count++] = *endpoint;
     sort_endpoints_by_priority(h);
@@ -478,6 +449,7 @@ int ip_provider_add_endpoint(ip_provider_t *provider, const ip_provider_endpoint
 }
 
 int ip_provider_remove_endpoint(ip_provider_t *provider, const char *name) {
+    if (provider == NULL) return CFDDNS_ERR_NULL_POINTER;
     ip_provider_handle_t *h = (ip_provider_handle_t *)provider->handle;
     if (h == NULL || name == NULL) return CFDDNS_ERR_NULL_POINTER;
 
@@ -498,6 +470,7 @@ int ip_provider_remove_endpoint(ip_provider_t *provider, const char *name) {
 int ip_provider_get_endpoints(ip_provider_t *provider,
                                ip_provider_endpoint_t *endpoints,
                                int max_count) {
+    if (provider == NULL) return 0;
     ip_provider_handle_t *h = (ip_provider_handle_t *)provider->handle;
     if (h == NULL || endpoints == NULL) return 0;
 
@@ -517,6 +490,27 @@ int ip_provider_get_ip_from_interface(ip_provider_t *provider,
         return provider->get_ip_from_interface(provider, type, interface_name, buf, len);
     }
     return CFDDNS_ERR_NULL_POINTER;
+}
+
+int ip_provider_get_ip_from_endpoint(ip_provider_t *provider,
+                                      ip_type_t type,
+                                      const char *endpoint_url,
+                                      const char *interface_name,
+                                      char *buf, size_t len) {
+    if (provider == NULL || endpoint_url == NULL || buf == NULL) return CFDDNS_ERR_NULL_POINTER;
+    if (endpoint_url[0] == '\0') return CFDDNS_ERR_INVALID_ARG;
+
+    ip_provider_handle_t *h = (ip_provider_handle_t *)provider->handle;
+    if (h == NULL) return CFDDNS_ERR_NULL_POINTER;
+
+    ip_provider_endpoint_t endpoint = {
+        .name = "configured",
+        .url_ipv4 = endpoint_url,
+        .url_ipv6 = endpoint_url,
+        .priority = 0,
+    };
+
+    return fetch_ip_from_endpoint(h, &endpoint, type, interface_name, buf, len);
 }
 
 int ip_provider_set_bind_interface(ip_provider_t *provider, const char *interface_name) {

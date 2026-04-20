@@ -29,6 +29,15 @@ typedef struct {
     bool force_update;             /**< Force update on start */
     char forced_ip[48];            /**< Forced IP address (empty for auto) */
 
+    /* One-shot direct update options (without config file) */
+    char api_token[256];           /**< Cloudflare API token */
+    char zone_id[64];              /**< Cloudflare zone id (optional if zone_name provided) */
+    char zone_name[128];           /**< Cloudflare zone name (optional if zone_id provided) */
+    char record_name[256];         /**< DNS record name */
+    char record_type[16];          /**< DNS record type: A/AAAA */
+    int ttl;                       /**< DNS TTL */
+    bool proxied;                  /**< Cloudflare proxied flag */
+
     /* Show command options */
     bool show_mode;                /**< Execute show command instead of running */
     ddns_show_mode_t show_type;    /**< Type of show command */

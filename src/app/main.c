@@ -91,8 +91,14 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    bool has_direct_once_args =
+        config.once &&
+        strlen(config.api_token) > 0 &&
+        strlen(config.record_name) > 0 &&
+        (strlen(config.zone_id) > 0 || strlen(config.zone_name) > 0);
+
     /* Check for required configuration */
-    if (strlen(config.config_path) == 0 && getenv("CFDDNS_API_TOKEN") == NULL) {
+    if (strlen(config.config_path) == 0 && getenv("CFDDNS_API_TOKEN") == NULL && !has_direct_once_args) {
         fprintf(stderr, "Error: No configuration provided.\n");
         fprintf(stderr, "Use -c <config_file> or set CFDDNS_API_TOKEN environment variable.\n\n");
         app_print_usage(argv[0]);

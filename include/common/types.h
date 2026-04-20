@@ -47,13 +47,13 @@ typedef struct {
 } version_t;
 
 /* ========== Current version ========== */
-#define CFDDNS_VERSION_MAJOR 2
-#define CFDDNS_VERSION_MINOR 0
+#define CFDDNS_VERSION_MAJOR 0
+#define CFDDNS_VERSION_MINOR 8
 #define CFDDNS_VERSION_PATCH 0
 #define CFDDNS_VERSION_SUFFIX ""
 
 /* Version string for display */
-#define CFDDNS_VERSION_STRING "2.0.0"
+#define CFDDNS_VERSION_STRING "0.8.0"
 
 /* ========== Platform detection ========== */
 #if defined(_WIN32) || defined(_WIN64)

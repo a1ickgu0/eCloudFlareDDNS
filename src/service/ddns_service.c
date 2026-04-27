@@ -21,6 +21,43 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <unistd.h>
+#include <ctype.h>
+
+/* ========== URL Encoding Helper ========== */
+
+/**
+ * @brief URL-encode a string for safe inclusion in query parameters
+ * @param input Input string to encode
+ * @param output Output buffer for encoded string
+ * @param output_size Size of output buffer
+ * @return Number of characters written (excluding null terminator)
+ */
+static int url_encode(const char *input, char *output, size_t output_size) {
+    if (input == NULL || output == NULL || output_size == 0) {
+        return 0;
+    }
+
+    size_t i = 0;
+    const char *p = input;
+
+    while (*p && i < output_size - 1) {
+        /* RFC 3986: unreserved characters don't need encoding */
+        if (isalnum(*p) || *p == '-' || *p == '_' || *p == '.' || *p == '~') {
+            output[i++] = *p;
+        } else if (i + 3 < output_size - 1) {
+            /* Encode as %XX */
+            snprintf(&output[i], 4, "%%%02X", (unsigned char)*p);
+            i += 3;
+        } else {
+            /* Buffer too small, stop encoding */
+            break;
+        }
+        p++;
+    }
+
+    output[i] = '\0';
+    return (int)i;
+}
 
 /* ========== DNS Record Type Mapping ========== */
 
@@ -302,7 +339,9 @@ static int cf_find_zone(ddns_service_handle_t *h, const char *zone_name,
     if (h == NULL || zone_name == NULL) return CFDDNS_ERR_NULL_POINTER;
 
     char path[256];
-    snprintf(path, sizeof(path), "/zones?name=%s", zone_name);
+    char encoded_zone[128];
+    url_encode(zone_name, encoded_zone, sizeof(encoded_zone));
+    snprintf(path, sizeof(path), "/zones?name=%s", encoded_zone);
 
     char *response = NULL;
     size_t response_len = 0;
@@ -354,8 +393,10 @@ static int cf_find_record(ddns_service_handle_t *h, const char *zone_id,
     if (h == NULL || zone_id == NULL || record_name == NULL) return CFDDNS_ERR_NULL_POINTER;
 
     char path[512];
+    char encoded_record[256];
+    url_encode(record_name, encoded_record, sizeof(encoded_record));
     snprintf(path, sizeof(path), "/zones/%s/dns_records?name=%s&type=%s",
-             zone_id, record_name, dns_record_type_name(type));
+             zone_id, encoded_record, dns_record_type_name(type));
 
     char *response = NULL;
     size_t response_len = 0;

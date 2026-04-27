@@ -71,11 +71,8 @@ typedef struct {
 /* ========== Compiler detection ========== */
 #if defined(__GNUC__)
     #define CFDDNS_COMPILER_GCC 1
-    #define CFDDNS_LIKELY(x)   __builtin_expect(!!(x), 1)
-    #define CFDDNS_UNLIKELY(x) __builtin_expect(!!(x), 0)
 #else
-    #define CFDDNS_LIKELY(x)   (x)
-    #define CFDDNS_UNLIKELY(x) (x)
+    #define CFDDNS_COMPILER_GCC 0
 #endif
 
 /* ========== Attribute macros ========== */

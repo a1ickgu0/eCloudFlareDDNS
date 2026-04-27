@@ -13,11 +13,20 @@ build/
 # Local assistant/editor metadata
 .claude/
 
+# Coverage files
+*.gcov
+*.gcda
+*.gcno
+
 # Test outputs
 tests/test_report
 tests/test_runner
 tests/*.log
 tests/*.tmp
+
+# Config files with secrets (real tokens, not examples)
+config/config.json
+config/docker_config.json
 
 # Tool-generated index files
 cscope.out

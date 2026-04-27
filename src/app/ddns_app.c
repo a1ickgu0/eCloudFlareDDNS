@@ -28,6 +28,37 @@
 
 /* ========== Forward declarations ========== */
 
+/* Environment variable names for sensitive configuration */
+#define CFDDNS_ENV_API_TOKEN    "CFDDNS_API_TOKEN"
+#define CFDDNS_ENV_ZONE_ID      "CFDDNS_ZONE_ID"
+#define CFDDNS_ENV_ZONE_NAME    "CFDDNS_ZONE_NAME"
+#define CFDDNS_ENV_RECORD_NAME  "CFDDNS_RECORD_NAME"
+
+/**
+ * @brief Get value from environment variable if CLI arg not provided
+ * @param cli_value Current CLI value (may be empty)
+ * @param env_name Environment variable name
+ * @param buf Buffer to store result
+ * @param buf_size Buffer size
+ * @return true if value was obtained from environment
+ */
+static bool get_env_if_empty(const char *cli_value, const char *env_name,
+                              char *buf, size_t buf_size) {
+    /* CLI argument takes precedence */
+    if (cli_value != NULL && cli_value[0] != '\0') {
+        return false;
+    }
+
+    /* Check environment variable */
+    const char *env_value = getenv(env_name);
+    if (env_value != NULL && env_value[0] != '\0') {
+        CFDDNS_STRNCPY(buf, env_value, buf_size);
+        return true;
+    }
+
+    return false;
+}
+
 static bool app_has_direct_once_args(const app_config_t *config) {
     if (config == NULL) return false;
 
@@ -137,16 +168,22 @@ void app_print_usage(const char *program_name) {
     printf("                          stats   - Show statistics\n");
     printf("  -r, --record <id>       Show specific record details\n");
     printf("      --once              Run once then exit\n");
-    printf("      --api-token <token> Cloudflare API token for direct once update\n");
-    printf("      --zone-id <id>      Cloudflare zone id for direct once update\n");
-    printf("      --zone-name <name>  Cloudflare zone name for direct once update\n");
-    printf("      --record-name <dns> DNS record name for direct once update\n");
+    printf("      --api-token <token> Cloudflare API token (or use CFDDNS_API_TOKEN env)\n");
+    printf("      --zone-id <id>      Cloudflare zone id (or use CFDDNS_ZONE_ID env)\n");
+    printf("      --zone-name <name>  Cloudflare zone name (or use CFDDNS_ZONE_NAME env)\n");
+    printf("      --record-name <dns> DNS record name (or use CFDDNS_RECORD_NAME env)\n");
     printf("      --record-type <t>   DNS record type: A or AAAA (default A)\n");
     printf("      --ttl <n>           DNS TTL for direct once update (default 1)\n");
     printf("      --proxied <bool>    Proxied flag for direct once update (default false)\n");
     printf("      --ip <addr>         Force update to specific IP in once mode\n");
     printf("  -h, --help              Show this help\n");
     printf("  -V, --version           Show version\n");
+    printf("\n");
+    printf("Environment variables (recommended for secrets):\n");
+    printf("  CFDDNS_API_TOKEN    Cloudflare API token (avoids process list exposure)\n");
+    printf("  CFDDNS_ZONE_ID      Cloudflare zone ID\n");
+    printf("  CFDDNS_ZONE_NAME    Cloudflare zone name\n");
+    printf("  CFDDNS_RECORD_NAME  DNS record name\n");
 }
 
 /* ========== Default Configuration ========== */
@@ -260,6 +297,18 @@ int app_config_parse_args(app_config_t *config, int argc, char *argv[]) {
                 return CFDDNS_ERR_INVALID_ARG;
         }
     }
+
+    /* Apply environment variable fallbacks for sensitive values.
+     * CLI arguments take precedence, but environment variables are safer
+     * for secrets (not visible in process list). */
+    get_env_if_empty(config->api_token, CFDDNS_ENV_API_TOKEN,
+                     config->api_token, sizeof(config->api_token));
+    get_env_if_empty(config->zone_id, CFDDNS_ENV_ZONE_ID,
+                     config->zone_id, sizeof(config->zone_id));
+    get_env_if_empty(config->zone_name, CFDDNS_ENV_ZONE_NAME,
+                     config->zone_name, sizeof(config->zone_name));
+    get_env_if_empty(config->record_name, CFDDNS_ENV_RECORD_NAME,
+                     config->record_name, sizeof(config->record_name));
 
     return CFDDNS_OK;
 }

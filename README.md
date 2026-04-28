@@ -77,6 +77,93 @@ make install PREFIX=/usr/local
 make uninstall PREFIX=/usr/local
 ```
 
+### Usage Modes
+
+There are three common ways to run eCloudFlare DDNS:
+
+#### Mode 1: Configuration File (Recommended for daemon mode)
+
+Create your config file from the sample:
+
+```bash
+cp config/example.json config/config.json
+# Edit config/config.json with your real settings
+```
+
+Run as daemon:
+
+```bash
+./build/bin/cfddns -c config/config.json
+```
+
+Or run once with config file:
+
+```bash
+./build/bin/cfddns -c config/config.json --once
+```
+
+#### Mode 2: Environment Variables (Recommended for secrets)
+
+Environment variables avoid exposing secrets in process list (`ps`).
+
+Set environment variables:
+
+```bash
+export CFDDNS_API_TOKEN="your_cloudflare_api_token_here"
+export CFDDNS_ZONE_NAME="example.com"
+export CFDDNS_RECORD_NAME="ddns.example.com"
+```
+
+Run with environment variables:
+
+```bash
+./build/bin/cfddns --once
+```
+
+Combine with CLI arguments (CLI overrides env vars):
+
+```bash
+export CFDDNS_API_TOKEN="your_token"
+export CFDDNS_ZONE_NAME="example.com"
+./build/bin/cfddns --once --record-name "custom.example.com" --ttl 300
+```
+
+Supported environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `CFDDNS_API_TOKEN` | Cloudflare API token |
+| `CFDDNS_ZONE_ID` | Cloudflare zone ID |
+| `CFDDNS_ZONE_NAME` | Cloudflare zone name |
+| `CFDDNS_RECORD_NAME` | DNS record name (FQDN) |
+
+#### Mode 3: CLI Arguments (Quick one-shot update)
+
+For quick manual updates without config or env vars:
+
+```bash
+./build/bin/cfddns \
+  --once \
+  --api-token "YOUR_CLOUDFLARE_API_TOKEN_HERE" \
+  --zone-name "example.com" \
+  --record-name "ddns.example.com" \
+  --record-type "A" \
+  --ttl 300 \
+  --proxied false \
+  --ip "203.0.113.10"
+```
+
+**Warning:** CLI arguments with secrets are visible in process list. Use environment variables for production.
+
+#### Quick Reference: Mode Selection
+
+| Scenario | Recommended Mode |
+|----------|-----------------|
+| Daemon service (continuous monitoring) | Config file |
+| Scripts / CI / Automation | Environment variables |
+| Quick manual test | CLI arguments |
+| Docker / Kubernetes | Environment variables |
+
 ### Runtime Command Usage
 
 Show help/version:
@@ -84,12 +171,6 @@ Show help/version:
 ```bash
 ./build/bin/cfddns -h
 ./build/bin/cfddns -V
-```
-
-Run with config file:
-
-```bash
-./build/bin/cfddns -c config/example.json
 ```
 
 Show current state without entering normal loop:
@@ -101,26 +182,6 @@ Show current state without entering normal loop:
 ./build/bin/cfddns -c config/example_multi.json -r www_ipv4
 ```
 
-Run one-shot direct update (without config file):
-
-```bash
-./build/bin/cfddns \
-  --once \
-  --api-token "YOUR_CLOUDFLARE_API_TOKEN_HERE" \
-  --zone-name "YOUR_ZONE_NAME" \
-  --record-name "YOUR_RECORD_FQDN" \
-  --record-type "A" \
-  --ttl 300 \
-  --proxied false \
-  --ip "203.0.113.10"
-```
-
-Result behavior for `--once` direct update:
-
-- On failure: prints `DDNS once update: FAILED (...)`
-- On success: prints `DDNS once update: SUCCESS`
-- After success: queries Cloudflare API and prints server-side record value
-
 Supported show types for `-s`:
 
 - `all`
@@ -129,6 +190,12 @@ Supported show types for `-s`:
 - `status`
 - `wan`
 - `stats`
+
+`--once` mode result:
+
+- On failure: prints `DDNS once update: FAILED (...)`
+- On success: prints `DDNS once update: SUCCESS`
+- After success: queries Cloudflare API and prints server-side record value
 
 ### Configuration Usage
 
@@ -243,6 +310,93 @@ make install PREFIX=/usr/local
 make uninstall PREFIX=/usr/local
 ```
 
+### 使用模式
+
+eCloudFlare DDNS 支持三种常用运行方式：
+
+#### 模式一：配置文件（守护进程推荐）
+
+从示例文件创建配置：
+
+```bash
+cp config/example.json config/config.json
+# 编辑 config/config.json，填入真实配置
+```
+
+以守护进程方式运行：
+
+```bash
+./build/bin/cfddns -c config/config.json
+```
+
+或使用配置文件执行一次性更新：
+
+```bash
+./build/bin/cfddns -c config/config.json --once
+```
+
+#### 模式二：环境变量（密钥安全推荐）
+
+使用环境变量可避免密钥在进程列表（`ps`）中暴露。
+
+设置环境变量：
+
+```bash
+export CFDDNS_API_TOKEN="your_cloudflare_api_token_here"
+export CFDDNS_ZONE_NAME="example.com"
+export CFDDNS_RECORD_NAME="ddns.example.com"
+```
+
+使用环境变量运行：
+
+```bash
+./build/bin/cfddns --once
+```
+
+结合命令行参数（CLI 参数优先级高于环境变量）：
+
+```bash
+export CFDDNS_API_TOKEN="your_token"
+export CFDDNS_ZONE_NAME="example.com"
+./build/bin/cfddns --once --record-name "custom.example.com" --ttl 300
+```
+
+支持的环境变量：
+
+| 变量 | 说明 |
+|------|------|
+| `CFDDNS_API_TOKEN` | Cloudflare API Token |
+| `CFDDNS_ZONE_ID` | Cloudflare Zone ID |
+| `CFDDNS_ZONE_NAME` | Zone 名称（域名） |
+| `CFDDNS_RECORD_NAME` | DNS 记录名称（完整域名） |
+
+#### 模式三：命令行参数（快速手动更新）
+
+无需配置文件或环境变量，快速手动更新：
+
+```bash
+./build/bin/cfddns \
+  --once \
+  --api-token "YOUR_CLOUDFLARE_API_TOKEN_HERE" \
+  --zone-name "example.com" \
+  --record-name "ddns.example.com" \
+  --record-type "A" \
+  --ttl 300 \
+  --proxied false \
+  --ip "203.0.113.10"
+```
+
+**注意：** 命令行传入的密钥会在进程列表中可见。生产环境建议使用环境变量。
+
+#### 快速参考：模式选择
+
+| 场景 | 推荐模式 |
+|------|----------|
+| 守护进程（持续监控） | 配置文件 |
+| 脚本 / CI / 自动化 | 环境变量 |
+| 快速手动测试 | 命令行参数 |
+| Docker / Kubernetes | 环境变量 |
+
 ### 运行命令说明
 
 查看帮助和版本：
@@ -250,12 +404,6 @@ make uninstall PREFIX=/usr/local
 ```bash
 ./build/bin/cfddns -h
 ./build/bin/cfddns -V
-```
-
-使用配置文件启动：
-
-```bash
-./build/bin/cfddns -c config/example.json
 ```
 
 仅查看状态（不进入常规更新循环）：
@@ -267,26 +415,6 @@ make uninstall PREFIX=/usr/local
 ./build/bin/cfddns -c config/example_multi.json -r www_ipv4
 ```
 
-一次性直更（不依赖配置文件）：
-
-```bash
-./build/bin/cfddns \
-  --once \
-  --api-token "YOUR_CLOUDFLARE_API_TOKEN_HERE" \
-  --zone-name "YOUR_ZONE_NAME" \
-  --record-name "YOUR_RECORD_FQDN" \
-  --record-type "A" \
-  --ttl 300 \
-  --proxied false \
-  --ip "203.0.113.10"
-```
-
-`--once` 直更模式结果说明：
-
-- 失败时输出：`DDNS once update: FAILED (...)`
-- 成功时输出：`DDNS once update: SUCCESS`
-- 成功后会再通过 Cloudflare API 回查并打印服务器端记录值
-
 `-s` 支持的类型：
 
 - `all`
@@ -295,6 +423,12 @@ make uninstall PREFIX=/usr/local
 - `status`
 - `wan`
 - `stats`
+
+`--once` 模式结果说明：
+
+- 失败时输出：`DDNS once update: FAILED (...)`
+- 成功时输出：`DDNS once update: SUCCESS`
+- 成功后会再通过 Cloudflare API 回查并打印服务器端记录值
 
 ### 配置文件使用说明
 
